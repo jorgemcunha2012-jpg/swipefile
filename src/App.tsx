@@ -1,6 +1,67 @@
 import { useEffect, useState } from 'react';
 import { getOffers } from './lib/supabase';
 
+// SVG Icons
+const Icons = {
+  heart: (filled: boolean) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  ),
+  dashboard: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  ),
+  list: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  ),
+  search: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.35-4.35" />
+    </svg>
+  ),
+  close: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  trending: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polyline points="23 6 13.46 15.89 8.41 10.88 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  ),
+  zap: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  checkCircle: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  ),
+  star: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+      <polygon points="12 2 15.09 10.26 24 10.27 17.18 16.70 20.09 24.96 12 18.54 3.91 24.96 6.82 16.70 0 10.27 8.91 10.26 12 2" />
+    </svg>
+  ),
+};
+
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [offers, setOffers] = useState<any[]>([]);
@@ -84,8 +145,8 @@ export default function App() {
 
           <nav style={{ display: 'flex', gap: '4px' }}>
             {[
-              { id: 'dashboard', label: 'Dashboard', count: offers.length },
-              { id: 'offers', label: 'All Offers', count: filteredOffers.length },
+              { id: 'dashboard', label: 'Dashboard', icon: Icons.dashboard, count: offers.length },
+              { id: 'offers', label: 'All Offers', icon: Icons.list, count: filteredOffers.length },
             ].map((item) => (
               <button
                 key={item.id}
@@ -100,6 +161,9 @@ export default function App() {
                   fontSize: '13px',
                   fontWeight: page === item.id ? '600' : '500',
                   transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
                 onMouseOver={(e) => {
                   if (page !== item.id) {
@@ -110,13 +174,15 @@ export default function App() {
                   (e.currentTarget as HTMLButtonElement).style.background = page === item.id ? '#f1f5f9' : 'transparent';
                 }}
               >
-                {item.label} {item.count > 0 && <span style={{ fontSize: '11px', marginLeft: '4px', opacity: 0.6 }}>({item.count})</span>}
+                <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon()}</span>
+                {item.label} {item.count > 0 && <span style={{ fontSize: '11px', opacity: 0.6 }}>({item.count})</span>}
               </button>
             ))}
           </nav>
 
-          <div style={{ fontSize: '20px', cursor: 'pointer' }} title={`${favorites.length} saved`}>
-            ⭐ {favorites.length}
+          <div style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontWeight: '600' }}>
+            <span style={{ display: 'flex', alignItems: 'center', color: '#ef4444' }}>{Icons.heart(true)}</span>
+            {favorites.length}
           </div>
         </div>
       </header>
@@ -267,7 +333,9 @@ function AllOffers({
                 (e.currentTarget as HTMLInputElement).style.borderColor = '#e2e8f0';
               }}
             />
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', display: 'flex', alignItems: 'center' }}>
+              {Icons.search()}
+            </span>
           </div>
         </div>
 
@@ -312,8 +380,8 @@ function AllOffers({
             }}
           >
             <option value="all">All Momentum</option>
-            <option value="escalating">📈 Escalating</option>
-            <option value="hot">🔥 Hot</option>
+            <option value="escalating">Escalating</option>
+            <option value="hot">Hot</option>
           </select>
         </div>
 
@@ -367,17 +435,6 @@ function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
     return status === 'active' ? '#10b981' : '#6b7280';
   };
 
-  const getMomentumLabel = (tag: string) => {
-    switch (tag) {
-      case 'escalating':
-        return '📈 Escalating';
-      case 'hot':
-        return '🔥 Hot';
-      default:
-        return null;
-    }
-  };
-
   return (
     <div
       onClick={onSelect}
@@ -410,11 +467,13 @@ function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
           style={{
             background: 'none',
             border: 'none',
-            fontSize: '18px',
             cursor: 'pointer',
             marginLeft: '8px',
-            padding: 0,
+            padding: '4px',
             transition: 'transform 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            color: isFavorite ? '#ef4444' : '#cbd5e1',
           }}
           onMouseOver={(e) => {
             (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.2)';
@@ -423,7 +482,7 @@ function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
             (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
           }}
         >
-          {isFavorite ? '❤️' : '🤍'}
+          {Icons.heart(isFavorite)}
         </button>
       </div>
 
@@ -436,9 +495,13 @@ function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
             borderRadius: '4px',
             color: getStatusColor(offer.status),
             fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
           }}
         >
-          {offer.status === 'active' ? '✓ Active' : 'Inactive'}
+          {offer.status === 'active' ? Icons.checkCircle() : ''}
+          {offer.status === 'active' ? 'Active' : 'Inactive'}
         </span>
         {offer.momentum_tag && (
           <span
@@ -449,9 +512,13 @@ function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
               borderRadius: '4px',
               color: '#1e293b',
               fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            {getMomentumLabel(offer.momentum_tag)}
+            {offer.momentum_tag === 'escalating' ? Icons.trending() : Icons.zap()}
+            {offer.momentum_tag === 'escalating' ? 'Escalating' : 'Hot'}
           </span>
         )}
       </div>
@@ -520,9 +587,17 @@ function DetailModal({ offer, onClose, isFavorite, onToggleFavorite }: any) {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button
               onClick={() => onToggleFavorite(offer.id)}
-              style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: 0 }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                color: isFavorite ? '#ef4444' : '#cbd5e1',
+              }}
             >
-              {isFavorite ? '❤️' : '🤍'}
+              {Icons.heart(isFavorite)}
             </button>
             <button
               onClick={onClose}
@@ -532,18 +607,20 @@ function DetailModal({ offer, onClose, isFavorite, onToggleFavorite }: any) {
                 padding: '8px 12px',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                color: '#64748b',
               }}
             >
-              ✕
+              {Icons.close()}
             </button>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '32px' }}>
           {[
-            { label: 'Status', value: offer.status === 'active' ? '✓ Active' : 'Inactive' },
-            { label: 'Momentum', value: offer.momentum_tag ? (offer.momentum_tag === 'escalating' ? '📈 Escalating' : '🔥 Hot') : '—' },
+            { label: 'Status', value: offer.status === 'active' ? 'Active' : 'Inactive' },
+            { label: 'Momentum', value: offer.momentum_tag ? (offer.momentum_tag === 'escalating' ? 'Escalating' : 'Hot') : '—' },
             { label: 'Ads Count', value: offer.num_ads },
             { label: 'Creatives', value: offer.num_creatives },
             { label: 'Days Active', value: `${offer.days_active}d` },
