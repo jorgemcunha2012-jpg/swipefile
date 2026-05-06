@@ -6,10 +6,21 @@ export default function App() {
   const [offers, setOffers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [sortBy, setSortBy] = useState('date');
+  const [filterPlatform, setFilterPlatform] = useState('all');
+  const [filterMomentum, setFilterMomentum] = useState('all');
 
   useEffect(() => {
+    const saved = localStorage.getItem('darkoffers_favorites');
+    if (saved) setFavorites(JSON.parse(saved));
     loadOffers();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('darkoffers_favorites', JSON.stringify(favorites));
+  }, [favorites]);
 
   const loadOffers = async () => {
     const { data } = await getOffers();
@@ -17,12 +28,35 @@ export default function App() {
     setLoading(false);
   };
 
-  const filteredOffers = offers.filter(
-    (o) =>
-      o.name.toLowerCase().includes(search.toLowerCase()) ||
-      o.niche.toLowerCase().includes(search.toLowerCase()) ||
-      o.platform.toLowerCase().includes(search.toLowerCase())
-  );
+  const toggleFavorite = (offerId: string) => {
+    setFavorites((prev) =>
+      prev.includes(offerId) ? prev.filter((id) => id !== offerId) : [...prev, offerId]
+    );
+  };
+
+  const isFavorite = (offerId: string) => favorites.includes(offerId);
+
+  const filteredOffers = offers
+    .filter(
+      (o) =>
+        (o.name.toLowerCase().includes(search.toLowerCase()) ||
+          o.niche.toLowerCase().includes(search.toLowerCase()) ||
+          o.platform.toLowerCase().includes(search.toLowerCase())) &&
+        (filterPlatform === 'all' || o.platform === filterPlatform) &&
+        (filterMomentum === 'all' || o.momentum_tag === filterMomentum)
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'ads':
+          return b.num_ads - a.num_ads;
+        case 'creatives':
+          return b.num_creatives - a.num_creatives;
+        case 'days':
+          return b.days_active - a.days_active;
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
 
   if (loading) {
     return (
@@ -50,8 +84,8 @@ export default function App() {
 
           <nav style={{ display: 'flex', gap: '4px' }}>
             {[
-              { id: 'dashboard', label: 'Dashboard' },
-              { id: 'offers', label: 'All Offers' },
+              { id: 'dashboard', label: 'Dashboard', count: offers.length },
+              { id: 'offers', label: 'All Offers', count: filteredOffers.length },
             ].map((item) => (
               <button
                 key={item.id}
@@ -76,27 +110,52 @@ export default function App() {
                   (e.currentTarget as HTMLButtonElement).style.background = page === item.id ? '#f1f5f9' : 'transparent';
                 }}
               >
-                {item.label}
+                {item.label} {item.count > 0 && <span style={{ fontSize: '11px', marginLeft: '4px', opacity: 0.6 }}>({item.count})</span>}
               </button>
             ))}
           </nav>
+
+          <div style={{ fontSize: '20px', cursor: 'pointer' }} title={`${favorites.length} saved`}>
+            ⭐ {favorites.length}
+          </div>
         </div>
       </header>
 
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 32px' }}>
-        {page === 'dashboard' && <Dashboard offers={offers} />}
-        {page === 'offers' && <AllOffers offers={filteredOffers} search={search} onSearch={setSearch} />}
+        {page === 'dashboard' && <Dashboard offers={offers} favorites={favorites} onSelectOffer={setSelectedOffer} />}
+        {page === 'offers' && (
+          <AllOffers
+            offers={filteredOffers}
+            search={search}
+            onSearch={setSearch}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            filterPlatform={filterPlatform}
+            onFilterPlatform={setFilterPlatform}
+            filterMomentum={filterMomentum}
+            onFilterMomentum={setFilterMomentum}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onSelectOffer={setSelectedOffer}
+            allOffers={offers}
+          />
+        )}
       </main>
+
+      {/* Detail Modal */}
+      {selectedOffer && (
+        <DetailModal offer={selectedOffer} onClose={() => setSelectedOffer(null)} isFavorite={isFavorite(selectedOffer.id)} onToggleFavorite={toggleFavorite} />
+      )}
     </div>
   );
 }
 
-function Dashboard({ offers }: any) {
+function Dashboard({ offers, favorites, onSelectOffer }: any) {
   const stats = [
     { label: 'Total Offers', value: offers.length, sublabel: 'Active campaigns' },
     { label: 'Escalating', value: offers.filter((o: any) => o.momentum_tag === 'escalating').length, sublabel: 'High momentum' },
     { label: 'Hot Offers', value: offers.filter((o: any) => o.momentum_tag === 'hot').length, sublabel: 'Trending now' },
-    { label: 'Platforms', value: new Set(offers.map((o: any) => o.platform)).size, sublabel: 'Active channels' },
+    { label: 'Saved', value: favorites.length, sublabel: 'In your collection' },
   ];
 
   return (
@@ -141,52 +200,145 @@ function Dashboard({ offers }: any) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
         {offers.slice(0, 6).map((offer: any) => (
-          <OfferCard key={offer.id} offer={offer} />
+          <OfferCard
+            key={offer.id}
+            offer={offer}
+            isFavorite={favorites.includes(offer.id)}
+            onToggleFavorite={() => {}}
+            onSelect={() => onSelectOffer(offer)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function AllOffers({ offers, search, onSearch }: any) {
+function AllOffers({
+  offers,
+  search,
+  onSearch,
+  sortBy,
+  onSortChange,
+  filterPlatform,
+  onFilterPlatform,
+  filterMomentum,
+  onFilterMomentum,
+  favorites,
+  onToggleFavorite,
+  onSelectOffer,
+  allOffers,
+}: any) {
+  const platforms = ['all', ...new Set(allOffers.map((o: any) => o.platform))];
+  const momentums = ['all', 'escalating', 'hot'];
+
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
         <h2 style={{ fontSize: '32px', fontWeight: '800', color: '#1e293b', margin: '0 0 8px' }}>Intelligence Library</h2>
         <p style={{ color: '#64748b', fontSize: '15px', margin: 0 }}>
-          {offers.length} offer{offers.length !== 1 ? 's' : ''} found across all channels
+          {offers.length} offer{offers.length !== 1 ? 's' : ''} found
         </p>
       </div>
 
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <input
-            type="text"
-            placeholder="Search offers..."
-            value={search}
-            onChange={(e) => onSearch(e.target.value)}
+      <div style={{ marginBottom: '32px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, minWidth: '250px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '8px' }}>Search</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Search offers..."
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 16px 10px 40px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                color: '#1e293b',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s ease',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => {
+                (e.currentTarget as HTMLInputElement).style.borderColor = '#cbd5e1';
+              }}
+              onBlur={(e) => {
+                (e.currentTarget as HTMLInputElement).style.borderColor = '#e2e8f0';
+              }}
+            />
+            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>🔍</span>
+          </div>
+        </div>
+
+        <div style={{ minWidth: '150px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '8px' }}>Platform</label>
+          <select
+            value={filterPlatform}
+            onChange={(e) => onFilterPlatform(e.target.value)}
             style={{
               width: '100%',
-              padding: '10px 16px 10px 40px',
+              padding: '10px 12px',
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
               color: '#1e293b',
               fontSize: '14px',
-              outline: 'none',
-              transition: 'all 0.2s ease',
-              boxSizing: 'border-box',
+              cursor: 'pointer',
             }}
-            onFocus={(e) => {
-              (e.currentTarget as HTMLInputElement).style.borderColor = '#cbd5e1';
-              (e.currentTarget as HTMLInputElement).style.background = '#ffffff';
+          >
+            {platforms.map((p) => (
+              <option key={p} value={p}>
+                {p === 'all' ? 'All Platforms' : p.toUpperCase()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ minWidth: '150px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '8px' }}>Momentum</label>
+          <select
+            value={filterMomentum}
+            onChange={(e) => onFilterMomentum(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              color: '#1e293b',
+              fontSize: '14px',
+              cursor: 'pointer',
             }}
-            onBlur={(e) => {
-              (e.currentTarget as HTMLInputElement).style.borderColor = '#e2e8f0';
-              (e.currentTarget as HTMLInputElement).style.background = '#f8fafc';
+          >
+            <option value="all">All Momentum</option>
+            <option value="escalating">📈 Escalating</option>
+            <option value="hot">🔥 Hot</option>
+          </select>
+        </div>
+
+        <div style={{ minWidth: '150px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#64748b', fontWeight: '600', marginBottom: '8px' }}>Sort By</label>
+          <select
+            value={sortBy}
+            onChange={(e) => onSortChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              color: '#1e293b',
+              fontSize: '14px',
+              cursor: 'pointer',
             }}
-          />
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '14px' }}>🔍</span>
+          >
+            <option value="date">Newest</option>
+            <option value="ads">Most Ads</option>
+            <option value="creatives">Most Creatives</option>
+            <option value="days">Most Active</option>
+          </select>
         </div>
       </div>
 
@@ -197,7 +349,13 @@ function AllOffers({ offers, search, onSearch }: any) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {offers.map((offer: any) => (
-            <OfferCard key={offer.id} offer={offer} />
+            <OfferCard
+              key={offer.id}
+              offer={offer}
+              isFavorite={favorites.includes(offer.id)}
+              onToggleFavorite={() => onToggleFavorite(offer.id)}
+              onSelect={() => onSelectOffer(offer)}
+            />
           ))}
         </div>
       )}
@@ -205,7 +363,7 @@ function AllOffers({ offers, search, onSearch }: any) {
   );
 }
 
-function OfferCard({ offer }: any) {
+function OfferCard({ offer, isFavorite, onToggleFavorite, onSelect }: any) {
   const getStatusColor = (status: string) => {
     return status === 'active' ? '#10b981' : '#6b7280';
   };
@@ -223,6 +381,7 @@ function OfferCard({ offer }: any) {
 
   return (
     <div
+      onClick={onSelect}
       style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -244,7 +403,29 @@ function OfferCard({ offer }: any) {
         <h4 style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px', flex: 1, margin: 0, lineHeight: 1.4 }}>
           {offer.name}
         </h4>
-        <span style={{ fontSize: '16px' }}>🤍</span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '18px',
+            cursor: 'pointer',
+            marginLeft: '8px',
+            padding: 0,
+            transition: 'transform 0.2s ease',
+          }}
+          onMouseOver={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.2)';
+          }}
+          onMouseOut={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+          }}
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -294,5 +475,108 @@ function OfferCard({ offer }: any) {
         <p style={{ color: '#94a3b8', fontSize: '11px', margin: 0 }}>{offer.days_active}d</p>
       </div>
     </div>
+  );
+}
+
+function DetailModal({ offer, onClose, isFavorite, onToggleFavorite }: any) {
+  return (
+    <>
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 100,
+          display: 'flex',
+          alignItems: 'flex-end',
+        }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: '#ffffff',
+          borderRadius: '16px 16px 0 0',
+          padding: '32px',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          zIndex: 101,
+          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.1)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b', margin: '0 0 8px' }}>{offer.name}</h2>
+            <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+              {offer.platform.toUpperCase()} • {offer.niche}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => onToggleFavorite(offer.id)}
+              style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: 0 }}
+            >
+              {isFavorite ? '❤️' : '🤍'}
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                background: '#f1f5f9',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+          {[
+            { label: 'Status', value: offer.status === 'active' ? '✓ Active' : 'Inactive' },
+            { label: 'Momentum', value: offer.momentum_tag ? (offer.momentum_tag === 'escalating' ? '📈 Escalating' : '🔥 Hot') : '—' },
+            { label: 'Ads Count', value: offer.num_ads },
+            { label: 'Creatives', value: offer.num_creatives },
+            { label: 'Days Active', value: `${offer.days_active}d` },
+            { label: 'Language', value: offer.language || '—' },
+          ].map((stat) => (
+            <div key={stat.label} style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px' }}>
+              <p style={{ color: '#94a3b8', fontSize: '11px', fontWeight: '600', margin: '0 0 8px', textTransform: 'uppercase' }}>
+                {stat.label}
+              </p>
+              <p style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', margin: 0 }}>{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {offer.structure && (
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', margin: '0 0 12px' }}>Structure</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', margin: 0 }}>
+              {offer.structure}
+            </p>
+          </div>
+        )}
+
+        {offer.product_type && (
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b', margin: '0 0 12px' }}>Product Type</h3>
+            <p style={{ color: '#64748b', fontSize: '14px', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', margin: 0 }}>
+              {offer.product_type}
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
