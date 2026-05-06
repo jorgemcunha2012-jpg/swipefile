@@ -1,206 +1,35 @@
 import { useEffect, useState } from 'react';
-import { supabase, signIn, signUp, signOut, getOffers, getSavedOffers, toggleSavedOffer } from './lib/supabase';
+import { getOffers, toggleSavedOffer } from './lib/supabase';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [offers, setOffers] = useState<any[]>([]);
-  const [savedOffers, setSavedOffers] = useState<any[]>([]);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [loginError, setLoginError] = useState('');
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [savedOffers, setSavedOffers] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Auth
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-      setLoading(false);
-    });
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => data?.subscription.unsubscribe();
+    loadOffers();
   }, []);
-
-  // Load offers
-  useEffect(() => {
-    if (user) loadOffers();
-  }, [user]);
 
   const loadOffers = async () => {
     const { data, error } = await getOffers();
     if (error) console.error(error);
     else setOffers(data || []);
-
-    const { data: saved } = await getSavedOffers(user.id);
-    setSavedOffers(saved || []);
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    try {
-      const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password);
-      if (error) setLoginError(error.message);
-    } catch (err) {
-      setLoginError('Erro ao processar requisição');
-      console.error(err);
-    }
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-    setEmail('');
-    setPassword('');
+    setSavedOffers([]);
+    setLoading(false);
   };
 
   const toggleSaved = async (offerId: string) => {
-    await toggleSavedOffer(user.id, offerId);
+    await toggleSavedOffer('demo-user', offerId);
     loadOffers();
   };
 
-  const isSaved = (offerId: string) => savedOffers.some((s) => s.offer_id === offerId);
+  const isSaved = (_offerId: string) => false;
 
-  if (loading) return <div style={{ color: 'white', textAlign: 'center', marginTop: '100px' }}>Carregando...</div>;
-
-  if (!user) {
+  if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1a1f3a 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-50%', right: '-50%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)', borderRadius: '50%' }} />
-        <div style={{ position: 'absolute', bottom: '-50%', left: '-50%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)', borderRadius: '50%' }} />
-
-        <div style={{ width: '100%', maxWidth: '420px', background: 'rgba(20, 29, 50, 0.8)', backdropFilter: 'blur(10px)', padding: '48px', borderRadius: '16px', border: '1px solid rgba(148, 163, 184, 0.1)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', position: 'relative', zIndex: 10 }}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold', background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)', backgroundClip: 'text', color: 'transparent', marginBottom: '8px' }}>
-              DARK OFFERs
-            </h1>
-            <p style={{ color: '#cbd5e1', fontSize: '13px', fontWeight: '500', letterSpacing: '0.5px' }}>
-              COMPETITIVE INTELLIGENCE PLATFORM
-            </p>
-          </div>
-
-          {loginError && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.5)', color: '#fca5a5', padding: '12px', borderRadius: '8px', fontSize: '13px', marginBottom: '20px' }}>
-              {loginError}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="seu@email.com"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-                onFocus={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = 'rgba(96, 165, 250, 0.5)';
-                  (e.target as HTMLInputElement).style.background = 'rgba(15, 23, 42, 0.95)';
-                }}
-                onBlur={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = 'rgba(148, 163, 184, 0.2)';
-                  (e.target as HTMLInputElement).style.background = 'rgba(15, 23, 42, 0.8)';
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '8px', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  background: 'rgba(15, 23, 42, 0.8)',
-                  border: '1px solid rgba(148, 163, 184, 0.2)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                }}
-                onFocus={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = 'rgba(96, 165, 250, 0.5)';
-                  (e.target as HTMLInputElement).style.background = 'rgba(15, 23, 42, 0.95)';
-                }}
-                onBlur={(e) => {
-                  (e.target as HTMLInputElement).style.borderColor = 'rgba(148, 163, 184, 0.2)';
-                  (e.target as HTMLInputElement).style.background = 'rgba(15, 23, 42, 0.8)';
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                fontWeight: '600',
-                fontSize: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                marginTop: '8px',
-              }}
-              onMouseOver={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 20px 25px -5px rgba(59, 130, 246, 0.4)';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
-              }}
-              onMouseOut={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none';
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
-              }}
-            >
-              {isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
-
-          <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px', marginTop: '20px' }}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              onClick={() => { setIsSignUp(!isSignUp); setLoginError(''); }}
-              style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: '600', fontSize: '13px', transition: 'color 0.3s ease' }}
-              onMouseOver={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#93c5fd';
-              }}
-              onMouseOut={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#60a5fa';
-              }}
-            >
-              {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
-          </p>
-        </div>
+      <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#cbd5e1', fontSize: '16px' }}>Loading offers...</div>
       </div>
     );
   }
@@ -433,7 +262,7 @@ export default function App() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {offers
-            .filter((o) => savedOffers.some((s) => s.offer_id === o.id))
+            .filter((o) => savedOffers.includes(o.id))
             .map((offer) => (
               <div
                 key={offer.id}
@@ -549,83 +378,6 @@ export default function App() {
                 {p === 'dashboard' ? 'Dashboard' : p === 'offers' ? 'Offers' : `Saved (${savedOffers.length})`}
               </button>
             ))}
-            <div style={{ width: '1px', height: '20px', background: 'rgba(148, 163, 184, 0.2)' }} />
-            <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                style={{
-                  background: 'rgba(96, 165, 250, 0.1)',
-                  border: '1px solid rgba(96, 165, 250, 0.3)',
-                  padding: '8px 16px',
-                  borderRadius: '6px',
-                  color: '#93c5fd',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-                onMouseOver={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(96, 165, 250, 0.2)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(96, 165, 250, 0.5)';
-                }}
-                onMouseOut={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(96, 165, 250, 0.1)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(96, 165, 250, 0.3)';
-                }}
-              >
-                👤 {user?.email?.split('@')[0]}
-              </button>
-              {showUserMenu && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    background: 'rgba(20, 29, 50, 0.95)',
-                    border: '1px solid rgba(148, 163, 184, 0.2)',
-                    borderRadius: '8px',
-                    marginTop: '8px',
-                    minWidth: '180px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'blur(10px)',
-                    zIndex: 50,
-                  }}
-                >
-                  <div style={{ padding: '8px' }}>
-                    <div style={{ padding: '12px', color: '#94a3b8', fontSize: '12px', borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
-                      {user?.email}
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      style={{
-                        width: '100%',
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        padding: '10px 12px',
-                        textAlign: 'left',
-                        borderRadius: '4px',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseOver={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239, 68, 68, 0.1)';
-                      }}
-                      onMouseOut={(e) => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'none';
-                      }}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
           </nav>
         </div>
       </header>
