@@ -56,3 +56,14 @@ export const isSavedOffer = (userId: string, offerId: string) =>
     .eq('user_id', userId)
     .eq('offer_id', offerId)
     .single();
+
+export const resetPassword = (email: string) =>
+  supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}`,
+  });
+
+export const updatePassword = (newPassword: string) =>
+  supabase.auth.updateUser({ password: newPassword });
+
+export const updateProfile = (data: { email?: string; password?: string }) =>
+  supabase.auth.updateUser(data);

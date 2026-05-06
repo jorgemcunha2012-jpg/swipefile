@@ -11,6 +11,7 @@ export default function App() {
   const [savedOffers, setSavedOffers] = useState<any[]>([]);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Auth
   useEffect(() => {
@@ -549,30 +550,82 @@ export default function App() {
               </button>
             ))}
             <div style={{ width: '1px', height: '20px', background: 'rgba(148, 163, 184, 0.2)' }} />
-            <button
-              onClick={handleLogout}
-              style={{
-                background: 'rgba(139, 92, 246, 0.1)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                color: '#c4b5fd',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: '600',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseOver={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139, 92, 246, 0.2)';
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139, 92, 246, 0.5)';
-              }}
-              onMouseOut={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(139, 92, 246, 0.1)';
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(139, 92, 246, 0.3)';
-              }}
-            >
-              Sign Out
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                style={{
+                  background: 'rgba(96, 165, 250, 0.1)',
+                  border: '1px solid rgba(96, 165, 250, 0.3)',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  color: '#93c5fd',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                onMouseOver={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(96, 165, 250, 0.2)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(96, 165, 250, 0.5)';
+                }}
+                onMouseOut={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(96, 165, 250, 0.1)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(96, 165, 250, 0.3)';
+                }}
+              >
+                👤 {user?.email?.split('@')[0]}
+              </button>
+              {showUserMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    background: 'rgba(20, 29, 50, 0.95)',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    borderRadius: '8px',
+                    marginTop: '8px',
+                    minWidth: '180px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    zIndex: 50,
+                  }}
+                >
+                  <div style={{ padding: '8px' }}>
+                    <div style={{ padding: '12px', color: '#94a3b8', fontSize: '12px', borderBottom: '1px solid rgba(148, 163, 184, 0.1)' }}>
+                      {user?.email}
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      style={{
+                        width: '100%',
+                        background: 'none',
+                        border: 'none',
+                        color: '#ef4444',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        padding: '10px 12px',
+                        textAlign: 'left',
+                        borderRadius: '4px',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseOver={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239, 68, 68, 0.1)';
+                      }}
+                      onMouseOut={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = 'none';
+                      }}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </header>
