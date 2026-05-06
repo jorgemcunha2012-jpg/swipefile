@@ -87,12 +87,6 @@ const Icons = {
   ),
 };
 
-interface OfferNote {
-  offerId: string;
-  content: string;
-  createdAt: number;
-}
-
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [offers, setOffers] = useState<any[]>([]);
@@ -365,7 +359,7 @@ export default function App() {
           isFavorite={isFavorite(selectedOffer.id)}
           onToggleFavorite={toggleFavorite}
           note={notes[selectedOffer.id] || ''}
-          onNoteChange={(content) => updateNote(selectedOffer.id, content)}
+          onNoteChange={(content: string) => updateNote(selectedOffer.id, content)}
         />
       )}
     </div>
@@ -959,7 +953,7 @@ function DetailModal({ offer, onClose, isFavorite, onToggleFavorite, note, onNot
   );
 }
 
-function Analysis({ offers, filteredOffers }: any) {
+function Analysis({ offers }: any) {
   const platforms = Array.from(new Set(offers.map((o: any) => o.platform))) as string[];
   const momentumCounts = {
     hot: offers.filter((o: any) => o.momentum_tag === 'hot').length,
@@ -984,8 +978,8 @@ function Analysis({ offers, filteredOffers }: any) {
       {}
     )
   )
-    .map(([niche, count]) => ({ niche, count }))
-    .sort((a, b) => b.count - a.count)
+    .map(([niche, count]) => ({ niche, count: count as number }))
+    .sort((a, b) => (b.count as number) - (a.count as number))
     .slice(0, 8);
 
   return (
@@ -1047,7 +1041,7 @@ function Analysis({ offers, filteredOffers }: any) {
                   style={{
                     height: '100%',
                     background: '#8b5cf6',
-                    width: `${(item.count / Math.max(...nicheCounts.map((s) => s.count))) * 100}%`,
+                    width: `${((item.count as number) / Math.max(...nicheCounts.map((s) => s.count as number))) * 100}%`,
                     transition: 'width 0.3s ease',
                   }}
                 />
@@ -1060,7 +1054,7 @@ function Analysis({ offers, filteredOffers }: any) {
   );
 }
 
-function ComparisonView({ offers, onBack, notes, isFavorite }: any) {
+function ComparisonView({ offers, onBack }: any) {
   if (offers.length === 0) {
     return (
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '60px 40px', textAlign: 'center' }}>
