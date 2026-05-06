@@ -228,7 +228,7 @@ function AllOffers({
   onSelectOffer,
   allOffers,
 }: any) {
-  const platforms = ['all', ...Array.from(new Set(allOffers.map((o: any) => o.platform)))];
+  const platforms: string[] = ['all', ...Array.from(new Set(allOffers.map((o: any) => o.platform))) as string[]];
 
   return (
     <div>
