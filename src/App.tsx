@@ -228,8 +228,7 @@ function AllOffers({
   onSelectOffer,
   allOffers,
 }: any) {
-  const platforms = ['all', ...new Set(allOffers.map((o: any) => o.platform))];
-  const momentums = ['all', 'escalating', 'hot'];
+  const platforms = ['all', ...Array.from(new Set(allOffers.map((o: any) => o.platform)))];
 
   return (
     <div>
@@ -288,7 +287,7 @@ function AllOffers({
               cursor: 'pointer',
             }}
           >
-            {platforms.map((p) => (
+            {platforms.map((p: string) => (
               <option key={p} value={p}>
                 {p === 'all' ? 'All Platforms' : p.toUpperCase()}
               </option>
