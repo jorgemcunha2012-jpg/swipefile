@@ -207,7 +207,7 @@ export default function NichosPage() {
               <Tooltip
                 cursor={{ strokeDasharray: '3 3' }}
                 contentStyle={{ backgroundColor: '#1A1A1B', border: '1px solid #3C3C3D', borderRadius: '2px' }}
-                formatter={(value) => value.toFixed(1)}
+                formatter={(value) => typeof value === 'number' ? value.toFixed(1) : value}
               />
               <Legend />
               <Scatter name="Nichos" data={niches.slice(0, 10)} fill="#CC2A1E" />
