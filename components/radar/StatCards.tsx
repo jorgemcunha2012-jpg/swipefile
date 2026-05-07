@@ -16,18 +16,18 @@ export function StatCards({ offers }: { offers: Offer[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-4 border border-b1 bg-s1 mb-4">
+    <div className="grid grid-cols-4 border border-b1 bg-s1">
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className={`px-4 py-3 border-r border-r-b1 ${
+          className={`px-6 py-5 border-r border-r-b1 ${
             idx === stats.length - 1 ? 'border-r-0' : ''
           } ${stat.highlighted ? 'bg-rd' : ''}`}
         >
-          <div className="text-2xl font-syne font-900 text-t1 mb-1">
+          <div className="text-3xl font-syne font-900 text-t1 mb-2">
             {stat.value}
           </div>
-          <div className="text-xs font-mono uppercase tracking-[0.06em] text-t3">
+          <div className="text-sm font-mono uppercase tracking-[0.06em] text-t3">
             {stat.label}
           </div>
         </div>

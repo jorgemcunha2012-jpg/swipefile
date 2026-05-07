@@ -17,13 +17,13 @@ export function SortToolbar({ active, onChange, resultCount }: SortToolbarProps)
   ]
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex gap-2">
+    <div className="flex items-center justify-between">
+      <div className="flex gap-3">
         {options.map((opt) => (
           <button
             key={opt.id}
             onClick={() => onChange(opt.id)}
-            className={`px-3 py-2 text-xs font-mono uppercase tracking-[0.06em] transition-all rounded-[2px] ${
+            className={`px-4 py-2 text-sm font-mono uppercase tracking-[0.06em] transition-all rounded-[2px] ${
               active === opt.id
                 ? 'bg-s2 border border-b2 text-t1'
                 : 'bg-transparent border-0 text-t3 hover:text-t2'
@@ -33,7 +33,7 @@ export function SortToolbar({ active, onChange, resultCount }: SortToolbarProps)
           </button>
         ))}
       </div>
-      <div className="text-xs font-mono text-t3 uppercase tracking-[0.06em]">
+      <div className="text-sm font-mono text-t3 uppercase tracking-[0.06em]">
         {resultCount} resultados
       </div>
     </div>
