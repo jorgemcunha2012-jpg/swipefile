@@ -15,6 +15,8 @@ module.exports = {
         b2: 'var(--b2)',
         red: 'var(--red)',
         rd: 'var(--rd)',
+        orange: 'var(--orange)',
+        od: 'var(--od)',
         t1: 'var(--t1)',
         t2: 'var(--t2)',
         t3: 'var(--t3)',

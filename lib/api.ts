@@ -86,6 +86,8 @@ export interface Offer {
   thumbnail_url: string | null
   click_url: string | null
   external_id: string | null
+  low_ticket: boolean | null
+  etv: number | null
   detected_at: string
   createdAt: string
   updatedAt: string

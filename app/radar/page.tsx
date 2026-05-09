@@ -695,38 +695,84 @@ export default function RadarPage() {
               <div
                 key={offer.id}
                 onContextMenu={(e) => handleContextMenu(e, offer)}
-                className="bg-s2 border border-b1 rounded-[2px] hover:border-b2 hover:bg-s3 transition-all overflow-hidden cursor-pointer group select-none">
-                <div className="h-24 bg-s3 border-b border-b1 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute text-3xl font-syne font-900 opacity-10 uppercase tracking-tight">
-                    {offer.niche.substring(0, 2)}
-                  </div>
-                  <div className="relative z-10 flex gap-2 flex-wrap justify-center">
-                    {newOfferIds.has(offer.id) && (
-                      <div className="px-3 py-1 bg-red text-bg rounded-[2px] text-xs font-mono uppercase tracking-[0.05em] animate-pulse">
-                        Nova
+                className="bg-s2 border border-b1 rounded-[2px] hover:border-b2 transition-all overflow-hidden cursor-pointer group select-none flex flex-col">
+
+                {/* Thumbnail */}
+                <div className="h-36 bg-s3 border-b border-b1 relative overflow-hidden flex-shrink-0">
+                  {offer.thumbnail_url ? (
+                    <img
+                      src={offer.thumbnail_url}
+                      alt={offer.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-4xl font-syne font-900 opacity-10 uppercase tracking-tight select-none">
+                        {offer.niche.substring(0, 2)}
                       </div>
+                    </div>
+                  )}
+                  {/* overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+                  {/* badges top-left */}
+                  <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
+                    {newOfferIds.has(offer.id) && (
+                      <span className="px-2 py-0.5 bg-red text-bg rounded-[2px] text-[10px] font-mono uppercase tracking-[0.05em] animate-pulse">
+                        Nova
+                      </span>
                     )}
-                    <div className={`px-3 py-1 rounded-[2px] border text-xs font-mono uppercase tracking-[0.05em] ${
+                    <span className={`px-2 py-0.5 rounded-[2px] text-[10px] font-mono uppercase tracking-[0.05em] ${
                       offer.momentum_tag === 'escalating' || offer.momentum_tag === 'hot'
-                        ? 'bg-rd border-red text-red'
-                        : 'bg-s1 border-b1 text-t2'
+                        ? 'bg-red text-bg'
+                        : 'bg-black/60 text-t2'
                     }`}>
                       {offer.momentum_tag}
-                    </div>
-                    <div className="px-3 py-1 bg-s1 border border-b1 rounded-[2px] text-xs font-mono uppercase tracking-[0.05em] text-t2">
+                    </span>
+                    {offer.structure && (
+                      <span className="px-2 py-0.5 bg-black/60 rounded-[2px] text-[10px] font-mono uppercase text-t2">
+                        {offer.structure}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* num_ads bottom-right */}
+                  <div className="absolute bottom-2 right-2">
+                    <span className="px-2 py-0.5 bg-black/70 rounded-[2px] text-[10px] font-mono text-t1">
                       {offer.num_ads} ads
-                    </div>
+                    </span>
                   </div>
                 </div>
 
-                <div className="p-4 flex flex-col">
-                  <div className="text-xs font-mono text-t3 uppercase tracking-[0.08em] mb-3">
-                    {offer.niche} • {offer.platform} • {offer.structure}
+                <div className="p-4 flex flex-col flex-1">
+                  {/* badges de info */}
+                  <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                    <span className="px-2 py-0.5 bg-s1 border border-b1 rounded-[2px] text-[10px] font-mono uppercase text-t3">
+                      {offer.platform}
+                    </span>
+                    <span className="px-2 py-0.5 bg-s1 border border-b1 rounded-[2px] text-[10px] font-mono uppercase text-t3">
+                      {offer.niche}
+                    </span>
+                    <span className="px-2 py-0.5 bg-od border border-orange rounded-[2px] text-[10px] font-mono uppercase text-orange">
+                      {offer.language === 'pt' ? 'PT' : offer.language === 'en' ? 'EN' : offer.language?.toUpperCase()}
+                    </span>
+                    {offer.low_ticket != null && (
+                      <span className="px-2 py-0.5 bg-od border border-orange rounded-[2px] text-[10px] font-mono uppercase text-orange">
+                        {offer.low_ticket ? 'Low Ticket' : 'High Ticket'}
+                      </span>
+                    )}
+                    {offer.etv != null && offer.etv > 0 && (
+                      <span className="px-2 py-0.5 bg-s1 border border-b1 rounded-[2px] text-[10px] font-mono text-t2">
+                        ETV {offer.etv % 1 === 0 ? `$${offer.etv}` : `$${Number(offer.etv).toFixed(2)}`}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-base font-syne font-700 text-t1 mb-4 leading-snug line-clamp-2">
+
+                  <h3 className="text-sm font-syne font-700 text-t1 mb-3 leading-snug line-clamp-2">
                     {offer.name}
                   </h3>
-                  <div className="grid grid-cols-3 gap-2 mb-4 text-xs font-mono">
+
+                  <div className="grid grid-cols-3 gap-2 mb-3 text-xs font-mono">
                     <div>
                       <div className="text-t3 uppercase tracking-[0.05em] mb-1">Criativos</div>
                       <div className="text-t1 font-600">{offer.num_creatives}</div>
@@ -740,7 +786,8 @@ export default function RadarPage() {
                       <div className="text-t1 font-600">{offer.num_clicks}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pt-3 border-t border-b1">
+
+                  <div className="flex items-center gap-3 pt-3 border-t border-b1 mt-auto">
                     <Link href={`/oferta/${offer.id}`} className="text-xs font-mono text-t2 group-hover:text-red transition-colors flex-1">
                       Ver detalhes →
                     </Link>

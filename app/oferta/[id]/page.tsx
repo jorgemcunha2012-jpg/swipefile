@@ -176,6 +176,7 @@ export default function OfferPage() {
           <div className="bg-s2 px-6 py-5 border-r border-b1">
             <div className="text-3xl font-syne font-900 text-t1 mb-2">{offer.num_creatives}</div>
             <div className="text-sm font-mono uppercase tracking-[0.05em] text-t3">Criativos</div>
+            <div className="text-[10px] font-mono text-t3 mt-1 opacity-50 leading-snug">peças publicitárias individuais</div>
           </div>
           <div className="bg-s2 px-6 py-5 border-r border-b1">
             <div className="text-3xl font-syne font-900 text-t1 mb-2">{offer.num_clicks}</div>
@@ -229,17 +230,22 @@ export default function OfferPage() {
             <div className="bg-s2 border border-b1 rounded-[2px] p-5">
               <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-4">Informações Básicas</div>
               <div className="space-y-4">
-                {[
-                  ['Plataforma', offer.platform],
-                  ['Tipo de Produto', offer.product_type],
-                  ['Estrutura', offer.structure ?? 'N/A'],
-                  ['Idioma', offer.language],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-1">{label}</div>
-                    <div className="text-sm font-syne font-700 text-t1 capitalize">{value}</div>
-                  </div>
-                ))}
+                <div>
+                  <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-1">Plataforma</div>
+                  <div className="text-sm font-syne font-700 text-t1 capitalize">{offer.platform}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-1">Tipo de Produto</div>
+                  <div className="text-sm font-syne font-700 text-t1 capitalize">{offer.product_type}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-1">Estrutura</div>
+                  <div className="text-sm font-syne font-700 text-t1 capitalize mb-2">{offer.structure ?? 'N/A'}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-1">Idioma</div>
+                  <div className="text-sm font-syne font-700 text-t1 capitalize">{offer.language}</div>
+                </div>
               </div>
             </div>
 
@@ -319,97 +325,120 @@ export default function OfferPage() {
           </div>
         </div>
 
-        {offer.num_creatives > 0 && (
-          <div>
-            <div className="text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-4">
-              Criativos ({offer.creatives && offer.creatives.length > 0 ? offer.creatives.length : offer.num_creatives})
-            </div>
-            {(!offer.creatives || offer.creatives.length === 0) && (
-              <div className="bg-s2 border border-b1 rounded-[2px] p-8 text-center text-xs font-mono text-t3">
-                Criativos em sincronização — disponíveis no próximo ciclo de busca.
-              </div>
-            )}
-            {offer.creatives && offer.creatives.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
-              {offer.creatives.map((c) => {
-                const ytId = c.url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1] ?? null
-                const thumbSrc = c.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
-                const isImage = !ytId && !c.thumbnail_url && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(c.url)
+        {offer.num_creatives > 0 && (() => {
+          const vslCreatives = offer.creatives?.filter((c) => c.type?.toLowerCase() === 'vsl') ?? []
+          const adCreatives = offer.creatives?.filter((c) => c.type?.toLowerCase() !== 'vsl') ?? []
+          const noCreatives = !offer.creatives || offer.creatives.length === 0
 
-                return (
-                  <a
-                    key={c.id}
-                    href={c.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group bg-s2 border border-b1 rounded-[2px] overflow-hidden hover:border-b2 transition-all flex flex-col"
-                  >
-                    {/* Media */}
-                    <div className="relative bg-s1 aspect-[9/16] overflow-hidden">
-                      {thumbSrc ? (
-                        <>
-                          <img src={thumbSrc} alt={c.headline ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-all">
-                            <div className="w-12 h-12 rounded-full bg-black/70 flex items-center justify-center">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
-                            </div>
-                          </div>
-                        </>
-                      ) : isImage ? (
-                        <img src={c.url} alt={c.headline ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-                          <div className="w-12 h-12 rounded-full bg-s3 border border-b2 flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-t2"><polygon points="5,3 19,12 5,21"/></svg>
-                          </div>
-                          <div className="text-xs font-mono text-t3 text-center break-all line-clamp-2">{c.platform}</div>
+          const CreativeCard = ({ c, wide = false }: { c: typeof vslCreatives[0]; wide?: boolean }) => {
+            const ytId = c.url.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1] ?? null
+            const thumbSrc = c.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null)
+            const isImage = !ytId && !c.thumbnail_url && /\.(jpe?g|png|webp|gif)(\?|$)/i.test(c.url)
+            const isVsl = c.type?.toLowerCase() === 'vsl'
+
+            return (
+              <a
+                href={c.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`group bg-s2 rounded-[2px] overflow-hidden transition-all flex ${wide ? 'border border-red hover:border-red flex-row' : 'border border-b1 hover:border-b2 flex-col'}`}
+              >
+                <div className={`relative bg-s1 overflow-hidden flex-shrink-0 ${wide ? 'w-48 aspect-[9/16]' : 'aspect-[9/16]'}`}>
+                  {thumbSrc ? (
+                    <>
+                      <img src={thumbSrc} alt={c.headline ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-all">
+                        <div className="w-12 h-12 rounded-full bg-black/70 flex items-center justify-center">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
                         </div>
-                      )}
-                      <div className="absolute top-2 left-2 flex gap-1">
-                        <span className="px-2 py-0.5 bg-bg bg-opacity-80 text-xs font-mono uppercase text-t2 rounded-[2px]">
-                          {c.type}
-                        </span>
-                        <span className="px-2 py-0.5 bg-bg bg-opacity-80 text-xs font-mono uppercase text-t3 rounded-[2px]">
-                          {c.platform}
-                        </span>
+                      </div>
+                    </>
+                  ) : isImage ? (
+                    <img src={c.url} alt={c.headline ?? ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
+                      <div className="w-12 h-12 rounded-full bg-s3 border border-b2 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-t2"><polygon points="5,3 19,12 5,21"/></svg>
                       </div>
                     </div>
-
-                    {/* Info */}
-                    <div className="p-3 flex flex-col gap-2">
-                      {c.headline && (
-                        <p className="text-xs font-mono text-t1 line-clamp-2 leading-relaxed">{c.headline}</p>
-                      )}
-                      {((c.num_likes ?? 0) > 0 || (c.num_comments ?? 0) > 0 || (c.num_views ?? 0) > 0) && (
-                      <div className="flex items-center gap-4 text-xs font-mono text-t2">
-                        {(c.num_likes ?? 0) > 0 && (
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <span className={`px-2 py-0.5 text-xs font-mono uppercase font-bold rounded-[2px] ${isVsl ? 'bg-red text-bg' : 'bg-black/70 text-t2'}`}>
+                      {isVsl ? 'VSL' : c.type}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-3 flex flex-col gap-2 flex-1">
+                  {isVsl && (
+                    <div className="text-[10px] font-mono text-red uppercase tracking-[0.05em]">Video Sales Letter</div>
+                  )}
+                  {c.headline && (
+                    <p className={`font-mono text-t1 leading-relaxed ${wide ? 'text-sm line-clamp-4' : 'text-xs line-clamp-2'}`}>{c.headline}</p>
+                  )}
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-t3 uppercase tracking-[0.05em]">
+                    <span>{c.platform}</span>
+                  </div>
+                  {((c.num_likes ?? 0) > 0 || (c.num_comments ?? 0) > 0 || (c.num_views ?? 0) > 0) && (
+                    <div className="flex items-center gap-4 text-xs font-mono text-t2">
+                      {(c.num_likes ?? 0) > 0 && (
                         <span className="flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                           {c.num_likes.toLocaleString('pt-BR')}
                         </span>
-                        )}
-                        {(c.num_comments ?? 0) > 0 && (
+                      )}
+                      {(c.num_comments ?? 0) > 0 && (
                         <span className="flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                           {c.num_comments.toLocaleString('pt-BR')}
                         </span>
-                        )}
-                        {(c.num_views ?? 0) > 0 && (
+                      )}
+                      {(c.num_views ?? 0) > 0 && (
                         <span className="flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                           {c.num_views.toLocaleString('pt-BR')}
                         </span>
-                        )}
-                      </div>
                       )}
                     </div>
-                  </a>
-                )
-              })}
+                  )}
+                </div>
+              </a>
+            )
+          }
+
+          return (
+            <div className="space-y-6">
+              {noCreatives && (
+                <div className="bg-s2 border border-b1 rounded-[2px] p-8 text-center text-xs font-mono text-t3">
+                  Criativos em sincronização — disponíveis no próximo ciclo de busca.
+                </div>
+              )}
+
+              {vslCreatives.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-mono text-red uppercase tracking-[0.05em] font-bold">VSL</span>
+                    <span className="text-xs font-mono text-t3">· Video Sales Letter · vídeo principal de vendas</span>
+                  </div>
+                  <div className="space-y-3">
+                    {vslCreatives.map((c) => <CreativeCard key={c.id} c={c} wide />)}
+                  </div>
+                </div>
+              )}
+
+              {adCreatives.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-mono text-t3 uppercase tracking-[0.05em]">Criativos</span>
+                    <span className="text-xs font-mono text-t3">· {adCreatives.length} peças publicitárias</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {adCreatives.map((c) => <CreativeCard key={c.id} c={c} />)}
+                  </div>
+                </div>
+              )}
             </div>
-            )}
-          </div>
-        )}
+          )
+        })()}
 
         {/* Alertas */}
         <div className="bg-s2 border border-b1 rounded-[2px] p-5">
