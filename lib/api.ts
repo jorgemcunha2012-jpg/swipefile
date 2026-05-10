@@ -164,6 +164,7 @@ export interface User {
   email: string
   name: string
   role: string
+  plan: 'free' | 'pro' | 'ultra'
 }
 
 export interface OfferBody {
@@ -387,5 +388,10 @@ export const api = {
 
     remove: (id: string) =>
       request<void>(`/saved-items/${id}`, { method: 'DELETE' }),
+  },
+
+  stripe: {
+    createCheckout: () =>
+      request<{ url: string }>('/stripe/checkout', { method: 'POST' }),
   },
 }

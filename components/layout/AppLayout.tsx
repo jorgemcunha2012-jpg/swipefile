@@ -314,7 +314,7 @@ function RemessaSummaryModal({ offers, total, ts, onClose }: {
 }
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/' },
+  { label: 'Dashboard', href: '/dashboard' },
   { label: 'Radar', href: '/radar' },
   { label: 'Trending', href: '/trending' },
   { label: 'Nichos', href: '/nichos' },

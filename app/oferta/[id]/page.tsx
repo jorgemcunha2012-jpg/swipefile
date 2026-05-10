@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { PaywallGate } from '@/components/PaywallGate'
 import { api, Offer, Alert } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 
@@ -17,7 +18,9 @@ const ALERT_TYPES = [
 export default function OfferPage() {
   const params = useParams()
   const offerId = params.id as string
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [paywallOpen, setPaywallOpen] = useState(false)
   const [offer, setOffer] = useState<Offer | null>(null)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
@@ -31,11 +34,17 @@ export default function OfferPage() {
   const [showAlertForm, setShowAlertForm] = useState(false)
 
   useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated || user?.plan === 'free') {
+      setLoading(false)
+      setPaywallOpen(true)
+      return
+    }
     api.offers.getById(offerId)
       .then(setOffer)
       .catch((err) => console.error('Error loading offer:', err))
       .finally(() => setLoading(false))
-  }, [offerId])
+  }, [offerId, authLoading, isAuthenticated, user])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -115,9 +124,12 @@ export default function OfferPage() {
             <Link href="/radar" className="text-sm font-mono text-red hover:text-red transition-colors">
               ← Voltar ao Radar
             </Link>
-            <h1 className="text-4xl font-syne font-900 text-t1 mb-2 mt-4">Oferta não encontrada</h1>
+            <h1 className="text-4xl font-syne font-900 text-t1 mb-2 mt-4">
+              {paywallOpen ? 'Acesso restrito' : 'Oferta não encontrada'}
+            </h1>
           </div>
         </div>
+        <PaywallGate open={paywallOpen} onClose={() => router.push('/radar')} />
       </AppLayout>
     )
   }

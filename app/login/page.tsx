@@ -1,113 +1,164 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { AnimatePresence } from 'framer-motion'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { AuthLayout } from '@/components/auth/AuthLayout'
+import { FormField } from '@/components/auth/FormField'
+import { PasswordField } from '@/components/auth/PasswordField'
+import { SubmitButton } from '@/components/auth/SubmitButton'
+import { AuthError } from '@/components/auth/AuthError'
 import { useAuth } from '@/lib/auth'
 
-export default function LoginPage() {
-  const { login, register } = useAuth()
-  const router = useRouter()
-  const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+type Lang = 'en' | 'pt'
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+const T = {
+  en: {
+    label: 'WELCOME BACK',
+    headline: 'Sign in to DarkRaven.',
+    sub: 'The radar is running. Get back in.',
+    email: 'EMAIL',
+    password: 'PASSWORD',
+    remember: 'Remember me',
+    forgot: 'Forgot password?',
+    cta: 'Sign in →',
+    loading: 'Signing in...',
+    link_pre: "Don't have an account?",
+    link_cta: 'Start for free →',
+    err_credentials: 'Invalid email or password.',
+  },
+  pt: {
+    label: 'BEM-VINDO DE VOLTA',
+    headline: 'Entre no DarkRaven.',
+    sub: 'O radar tá rodando. Volta pra dentro.',
+    email: 'EMAIL',
+    password: 'SENHA',
+    remember: 'Lembrar de mim',
+    forgot: 'Esqueceu a senha?',
+    cta: 'Entrar →',
+    loading: 'Entrando...',
+    link_pre: 'Ainda não tem conta?',
+    link_cta: 'Começar de graça →',
+    err_credentials: 'Email ou senha incorretos.',
+  },
+}
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+  remember: z.boolean().optional(),
+})
+
+type LoginForm = z.infer<typeof loginSchema>
+
+export default function LoginPage() {
+  const [lang, setLang] = useState<Lang>('en')
+  const [apiError, setApiError] = useState('')
+  const { login } = useAuth()
+  const router = useRouter()
+  const t = T[lang]
+
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '', remember: false },
+  })
+
+  const passwordValue = watch('password')
+
+  const onSubmit = async (data: LoginForm) => {
+    setApiError('')
     try {
-      if (mode === 'login') {
-        await login(email, password)
-      } else {
-        await register(name, email, password)
-      }
-      router.push('/')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao autenticar')
-    } finally {
-      setLoading(false)
+      await login(data.email, data.password)
+      router.push('/radar')
+    } catch {
+      setApiError(t.err_credentials)
     }
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-sm mx-auto mt-16 space-y-8">
-        <div>
-          <h1 className="text-4xl font-syne font-900 text-t1 mb-2">
-            {mode === 'login' ? 'Entrar' : 'Criar Conta'}
+    <AuthLayout lang={lang} onLangChange={setLang}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
+            {t.label}
+          </div>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(28px, 4vw, 36px)', color: 'var(--t1)', lineHeight: 1.1, margin: 0 }}>
+            {t.headline}
           </h1>
-          <p className="text-sm font-mono text-t3 uppercase tracking-[0.05em]">
-            {mode === 'login' ? 'Acesse sua conta SpyVault' : 'Crie sua conta SpyVault'}
+          <p style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 14, color: 'var(--t2)', marginTop: 8, lineHeight: 1.55 }}>
+            {t.sub}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-2">Nome</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-2 bg-s2 border border-b1 rounded-[2px] text-sm font-mono text-t1 placeholder-t3 focus:outline-none focus:border-b2 transition-all"
-                placeholder="Seu nome"
-              />
-            </div>
-          )}
+        {/* Fields */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 18 }}>
+          <FormField
+            label={t.email}
+            type="email"
+            placeholder="you@example.com"
+            error={errors.email?.message}
+            {...register('email')}
+          />
 
-          <div>
-            <label className="block text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 bg-s2 border border-b1 rounded-[2px] text-sm font-mono text-t1 placeholder-t3 focus:outline-none focus:border-b2 transition-all"
-              placeholder="email@exemplo.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-t3 uppercase tracking-[0.05em] mb-2">Senha</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 bg-s2 border border-b1 rounded-[2px] text-sm font-mono text-t1 placeholder-t3 focus:outline-none focus:border-b2 transition-all"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <div className="px-4 py-3 bg-rd border border-red rounded-[2px] text-sm font-mono text-red">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-3 bg-red text-bg text-sm font-mono uppercase tracking-[0.05em] rounded-[2px] hover:opacity-90 transition-all disabled:opacity-50"
-          >
-            {loading ? 'Carregando...' : mode === 'login' ? 'Entrar' : 'Criar Conta'}
-          </button>
-        </form>
-
-        <div className="text-center">
-          <button
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-            className="text-xs font-mono text-t3 hover:text-t1 transition-colors"
-          >
-            {mode === 'login' ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
-          </button>
+          <PasswordField
+            label={t.password}
+            placeholder="Your password"
+            value={passwordValue}
+            error={errors.password?.message}
+            {...register('password')}
+          />
         </div>
-      </div>
-    </AppLayout>
+
+        {/* Remember + Forgot */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              {...register('remember')}
+              style={{ accentColor: '#E0352A', width: 14, height: 14 }}
+            />
+            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 12, color: 'var(--t2)' }}>{t.remember}</span>
+          </label>
+          <Link
+            href="/forgot-password"
+            style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: 'var(--t2)', textDecoration: 'none' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--t1)'; e.currentTarget.style.textDecoration = 'underline' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t2)'; e.currentTarget.style.textDecoration = 'none' }}
+          >
+            {t.forgot}
+          </Link>
+        </div>
+
+        {/* API Error */}
+        <AnimatePresence>
+          {apiError && (
+            <div style={{ marginBottom: 16 }}>
+              <AuthError message={apiError} />
+            </div>
+          )}
+        </AnimatePresence>
+
+        <SubmitButton loading={isSubmitting} label={t.cta} loadingLabel={t.loading} />
+
+        {/* Sign up link */}
+        <p style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 12, color: 'var(--t2)', textAlign: 'center', marginTop: 20 }}>
+          {t.link_pre}{' '}
+          <Link
+            href="/signup"
+            style={{ color: 'var(--t1)', textDecoration: 'none' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#E0352A' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--t1)' }}
+          >
+            {t.link_cta}
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   )
 }

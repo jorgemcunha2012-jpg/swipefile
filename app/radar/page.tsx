@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SkeletonCard, SkeletonStatBox, SkeletonChart } from '@/components/SkeletonLoader'
+import { PaywallGate } from '@/components/PaywallGate'
 import { api, Offer } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { STORAGE_KEY_NEW } from '@/components/NotificationBell'
@@ -261,7 +262,7 @@ export default function RadarPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [savingId, setSavingId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const [newOfferIds, setNewOfferIds] = useState<Set<string>>(new Set())
 
   const loadOffers = useCallback(async () => {
@@ -374,6 +375,8 @@ export default function RadarPage() {
       setSavingId(null)
     }
   }
+
+  const [paywallOpen, setPaywallOpen] = useState(false)
 
   const { countdown, running, justFinished, isLastTen } = useJobStatus()
   const [banner, setBanner] = useState<{ msg: string; type: 'loading' | 'result' } | null>(null)
@@ -788,9 +791,18 @@ export default function RadarPage() {
                   </div>
 
                   <div className="flex items-center gap-3 pt-3 border-t border-b1 mt-auto">
-                    <Link href={`/oferta/${offer.id}`} className="text-xs font-mono text-t2 group-hover:text-red transition-colors flex-1">
-                      Ver detalhes →
-                    </Link>
+                    {user?.plan === 'free' || !isAuthenticated ? (
+                      <button
+                        onClick={() => setPaywallOpen(true)}
+                        className="text-xs font-mono text-t2 group-hover:text-red transition-colors flex-1 text-left"
+                      >
+                        Ver detalhes →
+                      </button>
+                    ) : (
+                      <Link href={`/oferta/${offer.id}`} className="text-xs font-mono text-t2 group-hover:text-red transition-colors flex-1">
+                        Ver detalhes →
+                      </Link>
+                    )}
                     {savingId === offer.id && (
                       <span className="text-xs font-mono text-t3">Salvando...</span>
                     )}
@@ -815,6 +827,8 @@ export default function RadarPage() {
           )}
         </div>
       </div>
+
+      <PaywallGate open={paywallOpen} onClose={() => setPaywallOpen(false)} />
 
       {/* Context menu */}
       {contextMenu && (
