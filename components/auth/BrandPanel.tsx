@@ -67,7 +67,7 @@ export function BrandPanel({ lang }: { lang: Lang }) {
       <div>
         <Image
           src="/logocoompleta.png"
-          alt="DarkRaven"
+          alt="Raven Spy"
           height={36}
           width={144}
           style={{ objectFit: 'contain', objectPosition: 'left center' }}

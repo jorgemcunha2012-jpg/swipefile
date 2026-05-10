@@ -19,7 +19,7 @@ type Lang = 'en' | 'pt'
 const T = {
   en: {
     label: 'WELCOME BACK',
-    headline: 'Sign in to DarkRaven.',
+    headline: 'Sign in to Raven Spy.',
     sub: 'The radar is running. Get back in.',
     email: 'EMAIL',
     password: 'PASSWORD',
@@ -33,7 +33,7 @@ const T = {
   },
   pt: {
     label: 'BEM-VINDO DE VOLTA',
-    headline: 'Entre no DarkRaven.',
+    headline: 'Entre no Raven Spy.',
     sub: 'O radar tá rodando. Volta pra dentro.',
     email: 'EMAIL',
     password: 'SENHA',

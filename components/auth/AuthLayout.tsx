@@ -57,7 +57,7 @@ export function AuthLayout({ lang, onLangChange, children }: AuthLayoutProps) {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <Image
             src="/logocoompleta.png"
-            alt="DarkRaven"
+            alt="Raven Spy"
             height={26}
             width={104}
             style={{ objectFit: 'contain', objectPosition: 'left center' }}

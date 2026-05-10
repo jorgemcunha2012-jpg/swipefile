@@ -3,8 +3,8 @@ import './globals.css'
 import { AuthProvider } from '@/lib/auth'
 
 export const metadata: Metadata = {
-  title: 'SPYVAULT — Competitive Intelligence',
-  description: 'Professional market intelligence for media buyers and affiliates',
+  title: 'RAVEN SPY — Competitive Intelligence',
+  description: 'Inteligência de mercado para media buyers e afiliados',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

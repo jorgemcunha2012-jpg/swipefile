@@ -391,7 +391,22 @@ export const api = {
   },
 
   stripe: {
-    createCheckout: () =>
-      request<{ url: string }>('/stripe/checkout', { method: 'POST' }),
+    createCheckout: (plan: 'pro' | 'ultra' = 'pro') =>
+      request<{ url: string }>('/stripe/checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
+
+    createSubscription: (plan: 'pro' | 'ultra' = 'pro') =>
+      request<{ clientSecret: string; subscriptionId: string }>('/stripe/subscription', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
+
+    createEmbeddedCheckout: (plan: 'pro' | 'ultra' = 'pro') =>
+      request<{ clientSecret: string }>('/stripe/embedded-checkout', {
+        method: 'POST',
+        body: JSON.stringify({ plan }),
+      }),
   },
 }

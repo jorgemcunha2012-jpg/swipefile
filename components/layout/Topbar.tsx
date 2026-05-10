@@ -9,7 +9,7 @@ export function Topbar() {
         {/* Logo */}
         <Image
           src="/logocoompleta.png"
-          alt="DarkRaven"
+          alt="Raven Spy"
           height={30}
           width={120}
           style={{ objectFit: 'contain', objectPosition: 'left center' }}
